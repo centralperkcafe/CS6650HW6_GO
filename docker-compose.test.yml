@@ -11,7 +11,7 @@ services:
       - "3306:3306"
 
   go-server:
-    image: reeedhuang/test-repo:latest
+    image: ${{ secrets.DOCKERHUB_USERNAME }}/go-server:latest
     # we rely on a pre-built image (no local build context)
     depends_on:
       - db
