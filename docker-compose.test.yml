@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_DATABASE=mydemodb
+      - MYSQL_USER=mydbuser
+      - MYSQL_PASSWORD=mydbpass
+      - MYSQL_ROOT_PASSWORD=rootpass
+    ports:
+      - "3306:3306"
+
+  go-server:
+    image: reeedhuang/test-repo:latest
+    # we rely on a pre-built image (no local build context)
+    depends_on:
+      - db
+    environment:
+      - DB_DSN=mydbuser:mydbpass@tcp(db:3306)/mydemodb
+    ports:
+      - "8080:8080"
