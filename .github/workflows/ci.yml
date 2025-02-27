@@ -36,6 +36,7 @@ jobs:
       # 5) Run a simple tests
       - name: Integration Test
         run: |
+          export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
           # Simple check that /health returns 200
           curl --fail http://localhost:8080/health
           echo "Health endpoint returned 200 OK!"
