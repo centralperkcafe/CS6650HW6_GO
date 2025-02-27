@@ -2,7 +2,7 @@ name: CI Build, Test, and Push
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-test-push:
@@ -19,6 +19,11 @@ jobs:
       # 3) Build your Go server image from the Dockerfile
       - name: Build server image
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/go-server:latest .
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
 
       # 4) Spin up MySQL and your server container for integration testing
       #    We'll assume you have a "docker-compose.test.yml" that references the built image.
