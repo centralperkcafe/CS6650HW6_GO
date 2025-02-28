@@ -30,6 +30,7 @@ jobs:
       - name: Start containers for testing
         run: |
           export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          export DOCKERHUB_REPO_NAME=${{ vars.DOCKERHUB_REPO_NAME }}
           docker-compose -f docker-compose.test.yml up -d
           # Sleep to allow MySQL and app to start up
           sleep 10
