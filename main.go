@@ -47,6 +47,63 @@ func main() {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
+	r.GET("/albums", func(c *gin.Context) {
+		rows, err := db.Query("SELECT id, artist, title, year, image_url FROM albums")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		var albums []map[string]interface{}
+		for rows.Next() {
+			var album struct {
+				ID       int
+				Artist   string
+				Title    string
+				Year     int
+				ImageURL string
+			}
+			if err := rows.Scan(&album.ID, &album.Artist, &album.Title, &album.Year, &album.ImageURL); err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			albums = append(albums, map[string]interface{}{
+				"id":        album.ID,
+				"artist":    album.Artist,
+				"title":     album.Title,
+				"year":      album.Year,
+				"image_url": album.ImageURL,
+			})
+		}
+		c.JSON(200, albums)
+	})
+
+	r.GET("/albums/:id", func(c *gin.Context) {
+		id := c.Param("id")
+
+		var album struct {
+			ID       int
+			Artist   string
+			Title    string
+			Year     int
+			ImageURL string
+		}
+
+		err := db.QueryRow("SELECT id, artist, title, year, image_url FROM albums WHERE id = ?", id).
+			Scan(&album.ID, &album.Artist, &album.Title, &album.Year, &album.ImageURL)
+
+		if err == sql.ErrNoRows {
+			c.JSON(404, gin.H{"error": "Album not found"})
+			return
+		} else if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, album)
+	})
+
 	r.POST("/albums", func(c *gin.Context) {
 		var album struct {
 			Artist   string `json:"artist" binding:"required"`
@@ -70,31 +127,6 @@ func main() {
 
 		id, _ := result.LastInsertId()
 		c.JSON(200, gin.H{"id": id})
-	})
-
-	r.GET("/albums/:id", func(c *gin.Context) {
-		id := c.Param("id")
-
-		var album struct {
-			ID       int    `json:"id"`
-			Artist   string `json:"artist"`
-			Title    string `json:"title"`
-			Year     int    `json:"year"`
-			ImageURL string `json:"image_url"`
-		}
-
-		err := db.QueryRow("SELECT id, artist, title, year, image_url FROM albums WHERE id = ?", id).
-			Scan(&album.ID, &album.Artist, &album.Title, &album.Year, &album.ImageURL)
-
-		if err == sql.ErrNoRows {
-			c.JSON(404, gin.H{"error": "Album not found"})
-			return
-		} else if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(200, album)
 	})
 
 	port := os.Getenv("PORT")
