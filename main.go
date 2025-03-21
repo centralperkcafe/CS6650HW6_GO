@@ -11,6 +11,15 @@ import (
 
 var db *sql.DB
 
+// Album defines the structure of album data
+type Album struct {
+	ID       int    `json:"id"`
+	Artist   string `json:"artist"`
+	Title    string `json:"title"`
+	Year     int    `json:"year"`
+	ImageURL string `json:"image_url"`
+}
+
 func main() {
 	dsn := os.Getenv("DB_DSN")
 	if dsn == "" {
@@ -55,26 +64,14 @@ func main() {
 		}
 		defer rows.Close()
 
-		var albums []map[string]interface{}
+		var albums []Album
 		for rows.Next() {
-			var album struct {
-				ID       int
-				Artist   string
-				Title    string
-				Year     int
-				ImageURL string
-			}
+			var album Album
 			if err := rows.Scan(&album.ID, &album.Artist, &album.Title, &album.Year, &album.ImageURL); err != nil {
 				c.JSON(500, gin.H{"error": err.Error()})
 				return
 			}
-			albums = append(albums, map[string]interface{}{
-				"id":        album.ID,
-				"artist":    album.Artist,
-				"title":     album.Title,
-				"year":      album.Year,
-				"image_url": album.ImageURL,
-			})
+			albums = append(albums, album)
 		}
 		c.JSON(200, albums)
 	})
@@ -82,14 +79,7 @@ func main() {
 	r.GET("/albums/:id", func(c *gin.Context) {
 		id := c.Param("id")
 
-		var album struct {
-			ID       int
-			Artist   string
-			Title    string
-			Year     int
-			ImageURL string
-		}
-
+		var album Album
 		err := db.QueryRow("SELECT id, artist, title, year, image_url FROM albums WHERE id = ?", id).
 			Scan(&album.ID, &album.Artist, &album.Title, &album.Year, &album.ImageURL)
 
@@ -105,13 +95,7 @@ func main() {
 	})
 
 	r.POST("/albums", func(c *gin.Context) {
-		var album struct {
-			Artist   string `json:"artist" binding:"required"`
-			Title    string `json:"title" binding:"required"`
-			Year     int    `json:"year" binding:"required"`
-			ImageURL string `json:"image_url" binding:"required"`
-		}
-
+		var album Album
 		if err := c.ShouldBindJSON(&album); err != nil {
 			c.JSON(400, gin.H{"error": "Invalid request data"})
 			return
